@@ -91,9 +91,9 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/simple-chatbot:latest
-            ghcr.io/${{ github.repository_owner }}/simple-chatbot:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/simple-chatbot:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:latest
+            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.ref_name }}
           # Acelerar build de la imagen
           cache-from: type=gha
           cache-to: type=gha,mode=max
