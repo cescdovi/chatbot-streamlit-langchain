@@ -51,6 +51,7 @@ jobs:
             echo "No tests found. Skipping pytest and coverage."
           fi
 
+          
       # Codecov: herramienta externa que se conecta a GitHub y levanta un dashboard para ver métricas de coverage
       - name: Upload coverage to Codecov
         if: ${{ hashFiles('coverage.xml') != '' }}
