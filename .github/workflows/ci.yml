@@ -9,6 +9,10 @@ permissions:
   packages: write
   id-token: write
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: ${{ github.repository_owner }}/simple-chatbot-backend
+  IMAGE_FRONTEND: ${{ github.repository_owner }}/simple-chatbot-frontend
 jobs:
   test_and_build:
     runs-on: ubuntu-latest
@@ -30,7 +34,7 @@ jobs:
           python -m pip install ruff pytest pytest-cov
 
       - name: Check linting
-        run: ruff check backend
+        run: ruff check backend frontend
 
       # coverage: herramienta que permite medir qué % del código se ejecutó durante los tests.
       #   Puede tumbar el job si no se llega al mínimo definido (--cov-fail-under).
@@ -44,6 +48,7 @@ jobs:
           if ls tests/*.py tests/**/*.py backend/tests/*.py backend/tests/**/*.py 1> /dev/null 2>&1; then
             python -m pytest -v \
               --cov=backend \
+              --cov=frontend \
               --cov-report=term-missing \
               --cov-report=xml:coverage.xml \
               --cov-fail-under=80
@@ -82,34 +87,34 @@ jobs:
           username: ${{ github.actor }} # cuenta que dispara el workflow
           password: ${{ secrets.GITHUB_TOKEN }} # token efímero generado durante la sesión
 
-      # Build desde Dockerfile en la raíz (si existe)
-      - name: Build and push the Docker image (root Dockerfile)
-        if: ${{ hashFiles('Dockerfile') != '' }}
+      # Build desde backend/Dockerfile
+      - name: Build and push the Docker image (frontend)
+        if: ${{ hashFiles('backend/Dockerfile') != '' }}
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:latest
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ github.ref_name }}
           # Acelerar build de la imagen
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Build desde backend/Dockerfile (si existe)
-      - name: Build and push the Docker image (backend Dockerfile)
-        if: ${{ hashFiles('backend/Dockerfile') != '' }}
+      # Build desde frontend/Dockerfile
+      - name: Build and push the Docker image (frontend)
+        if: ${{ hashFiles('frontend/Dockerfile') != '' }}
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./backend/Dockerfile
+          context: ./frontend
+          file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:latest
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/chatbot-streamlit-langchain:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:${{ github.ref_name }}
           # Acelerar build de la imagen
           cache-from: type=gha
           cache-to: type=gha,mode=max
