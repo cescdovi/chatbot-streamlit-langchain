@@ -1,0 +1,48 @@
+
+services: # cada servicio es una parte de la app, que se ejecuta en un contenedor Docker
+  # Servicio API Backend con OpenAI
+  api-backend: 
+    build: #indica a Docker dónde encontrar el código fuente y el Dockerfile para construir la imagen del contenedor
+      context: . #ruta al directorio con los archivos para construir la imagen
+      dockerfile: ./backend/Dockerfile
+    container_name: openai-api
+    ports:
+      - "8000:8000" # mapea el puerto 8000 de la maquina al puerto 8000 del contenedor: permite acceder a la API desde el exterior
+    
+    env_file:
+      - .env
+    environment: # vars. que se definen dentro del contenedor (sobreescriben las del env_file)
+      - PORT=8000  #puerto en el que la aplicación se ejecutará dentro del contenedor.
+    
+    volumes:
+      - ./backend:/app # Sincroniza el directorio local ./backend con el directorio /app dentro del contenedor
+    restart: unless-stopped  # política de reinicio: El contenedor se reiniciará automáticamente si falla o se detiene
+    networks:
+      - chat-network #Asigna el contenedor a la red chat-network, para comunicarse con otros contenedores en la misma red
+
+  # Servicio Chainlit Frontend
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    container_name: streamlit-app
+    ports:
+      - "8501:8501"
+      
+    env_file:
+      - .env
+    environment:
+      - BACKEND_URL=http://api-backend:8000
+      - FRONTEND_PORT=8501
+
+    depends_on:
+      - api-backend
+    volumes:
+      - ./frontend:/app
+    restart: unless-stopped
+    networks:
+      - chat-network
+
+networks: # redes virtuales que se usarán para la comunicación entre los servicios
+  chat-network:
+    driver: bridge # tipo de red. Una red bridge es la predeterminada para contenedores en el mismo host, permitiendo que se comuniquen entre sí de forma aislada
